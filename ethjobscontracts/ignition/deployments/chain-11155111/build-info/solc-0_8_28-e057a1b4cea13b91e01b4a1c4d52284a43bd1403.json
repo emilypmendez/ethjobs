@@ -1,0 +1,42 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-e057a1b4cea13b91e01b4a1c4d52284a43bd1403",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "userSourceNameMap": {
+    "contracts/EthJobsEscrowFactory.sol": "project/contracts/EthJobsEscrowFactory.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/EthJobsEscrow.sol": {
+        "content": "// SPDX-License-Identifier: UNLICENSED\npragma solidity ^0.8.28;\n\n// ERC20 interface for PYUSD\ninterface IERC20 {\n    function totalSupply() external view returns (uint256);\n    function balanceOf(address account) external view returns (uint256);\n    function transfer(address to, uint256 amount) external returns (bool);\n    function allowance(address owner, address spender) external view returns (uint256);\n    function approve(address spender, uint256 amount) external returns (bool);\n    function transferFrom(address from, address to, uint256 amount) external returns (bool);\n    \n    event Transfer(address indexed from, address indexed to, uint256 value);\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n}\n\ncontract EthJobsEscrow {\n  event JobCreated(address indexed employer, address indexed employee, uint256 amount, uint256 deadline);\n  event FundsReleased(address indexed employee, uint256 amount);\n  event FundsRefunded(address indexed employer, uint256 amount);\n  \n  address public employer;\n  address public employee;\n  uint256 public amount;\n  uint256 public deadline;\n  \n  // PYUSD token address\n  address public constant PYUSD_TOKEN = 0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9;\n  \n  constructor(address _employee, uint256 _deadline, uint256 _amount) {\n    require(_employee != address(0), \"Invalid employee address\");\n    require(_amount > 0, \"Amount must be greater than 0\");\n    require(_deadline > block.timestamp, \"Deadline must be in the future\");\n    \n    employer = msg.sender;\n    employee = _employee;\n    amount = _amount;\n    deadline = _deadline;\n    \n    // Transfer PYUSD from employer to contract\n    IERC20(PYUSD_TOKEN).transferFrom(msg.sender, address(this), _amount);\n    \n    emit JobCreated(employer, employee, amount, deadline);\n  }\n\n  modifier onlyEmployer() {\n    require(msg.sender == employer, \"Only employer can call this function\");\n    _;\n  }\n  \n  function releaseFunds() external onlyEmployer {\n    require(amount > 0, \"No funds to release\");\n    \n    uint256 amountToSend = amount;\n    amount = 0;\n    \n    // Transfer PYUSD to employee\n    bool success = IERC20(PYUSD_TOKEN).transfer(employee, amountToSend);\n    require(success, \"PYUSD transfer failed\");\n    \n    emit FundsReleased(employee, amountToSend);\n  }\n  \n  function refund() external onlyEmployer {\n    require(block.timestamp > deadline, \"Deadline has not passed yet\");\n    require(amount > 0, \"No funds to refund\");\n    \n    uint256 amountToRefund = amount;\n    amount = 0;\n    \n    // Transfer PYUSD back to employer\n    bool success = IERC20(PYUSD_TOKEN).transfer(employer, amountToRefund);\n    require(success, \"PYUSD transfer failed\");\n    \n    emit FundsRefunded(employer, amountToRefund);\n  }\n  \n  /**\n   * @notice Get all contract state in one call\n   * @return _employer The employer's address\n   * @return _employee The employee's address  \n   * @return _amount The amount deposited for the job\n   * @return _deadline The deadline timestamp\n   * @return _currentTime The current block timestamp\n   * @return _isDeadlinePassed Whether the deadline has passed\n   * @return _hasFunds Whether there are funds to release/refund\n   * @return _pyusdBalance The current PYUSD balance of the contract\n   */\n  function viewState() external view returns (\n    address _employer,\n    address _employee,\n    uint256 _amount,\n    uint256 _deadline,\n    uint256 _currentTime,\n    bool _isDeadlinePassed,\n    bool _hasFunds,\n    uint256 _pyusdBalance\n  ) {\n    return (\n      employer,\n      employee,\n      amount,\n      deadline,\n      block.timestamp,\n      block.timestamp > deadline,\n      amount > 0,\n      IERC20(PYUSD_TOKEN).balanceOf(address(this))\n    );\n  }\n  \n  /**\n   * @notice Get the PYUSD balance of the contract\n   */\n  function getPYUSDBalance() external view returns (uint256) {\n    return IERC20(PYUSD_TOKEN).balanceOf(address(this));\n  }\n  \n  /**\n   * @notice Get the PYUSD balance of any address\n   */\n  function getPYUSDBalanceOf(address _account) external view returns (uint256) {\n    return IERC20(PYUSD_TOKEN).balanceOf(_account);\n  }\n  \n  /**\n   * @notice Prevents anyone from sending ETH directly to the contract\n   * @dev This contract only works with PYUSD tokens\n   */\n  receive() external payable {\n    revert(\"This contract only accepts PYUSD tokens. ETH transfers not allowed.\");\n  }\n}"
+      },
+      "project/contracts/EthJobsEscrowFactory.sol": {
+        "content": "// SPDX-License-Identifier: UNLICENSED\npragma solidity ^0.8.28;\n\nimport \"./EthJobsEscrow.sol\";\n\ncontract EthJobsEscrowFactory {\n  // Events\n  event EscrowCreated(\n    address indexed escrowAddress,\n    address indexed employer,\n    address indexed employee,\n    uint256 amount,\n    uint256 deadline\n  );\n  \n  // State variables\n  address[] public deployedEscrows;\n  address public constant PYUSD_TOKEN = 0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9;\n  \n  /**\n   * @notice Create a new escrow contract\n   * @param _employee The employee's address\n   * @param _deadline The deadline timestamp\n   * @param _amount The amount of PYUSD to deposit\n   * @return escrowAddress The address of the deployed escrow contract\n   */\n  function createEscrow(\n    address _employee,\n    uint256 _deadline,\n    uint256 _amount\n  ) external returns (address escrowAddress) {\n    require(_employee != address(0), \"Invalid employee address\");\n    require(_amount > 0, \"Amount must be greater than 0\");\n    require(_deadline > block.timestamp, \"Deadline must be in the future\");\n    \n    // Check if employer has approved enough PYUSD\n    IERC20 pyusd = IERC20(PYUSD_TOKEN);\n    require(\n      pyusd.allowance(msg.sender, address(this)) >= _amount,\n      \"Insufficient PYUSD allowance\"\n    );\n    \n    // Deploy new escrow contract\n    escrowAddress = address(new EthJobsEscrow(_employee, _deadline, _amount));\n    \n    // Track the deployed escrow\n    deployedEscrows.push(escrowAddress);\n    \n    // Emit event\n    emit EscrowCreated(\n      escrowAddress,\n      msg.sender,\n      _employee,\n      _amount,\n      _deadline\n    );\n  }\n  \n  /**\n   * @notice Get all deployed escrow addresses\n   * @return Array of all escrow contract addresses\n   */\n  function getAllEscrows() external view returns (address[] memory) {\n    return deployedEscrows;\n  }\n  \n  /**\n   * @notice Get total number of escrows deployed\n   * @return Total count of escrows\n   */\n  function getEscrowCount() external view returns (uint256) {\n    return deployedEscrows.length;\n  }\n}\n"
+      }
+    }
+  }
+}
