@@ -1,0 +1,13 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Briefcase with Ethereum logo -->
+  <rect x="5" y="15" width="40" height="30" rx="4" fill="#2563EB"/>
+  <rect x="15" y="10" width="20" height="8" rx="2" fill="#2563EB"/>
+  
+  <!-- Ethereum diamond inside briefcase -->
+  <polygon points="25,22 30,28 25,32 20,28" fill="white"/>
+  <polygon points="25,22 30,28 25,25" fill="#E5E7EB"/>
+  <polygon points="25,25 20,28 25,32" fill="#E5E7EB"/>
+  
+  <!-- ETHJobs text -->
+  <text x="55" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1F2937">ETHJobs</text>
+</svg>
