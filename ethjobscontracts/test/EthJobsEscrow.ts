@@ -39,6 +39,8 @@ describe("EthJobsEscrow", async function () {
     const state = await escrow.read.viewState() as [string, string, bigint, bigint, bigint, boolean, boolean];
     console.log("hi state below")
     console.log(state)
+    console.log("hi escrow contract below")
+    console.log(escrow)
     // Get the actual employer address from the contract
     const actualEmployer = await escrow.read.employer();
     

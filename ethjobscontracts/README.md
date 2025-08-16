@@ -1,57 +1,158 @@
-# Sample Hardhat 3 Beta Project (`node:test` and `viem`)
+# EthJobs Escrow Contract
 
-This project showcases a Hardhat 3 Beta project using the native Node.js test runner (`node:test`) and the `viem` library for Ethereum interactions.
+A decentralized escrow system for job payments using PYUSD tokens on Ethereum Sepolia testnet.
 
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+## Overview
 
-## Project Overview
+This project implements a single smart contract that handles multiple job escrows using a mapping system. Each job has a unique ID and can be managed independently.
 
-This example project includes:
+## How It Works
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using [`node:test`](nodejs.org/api/test.html), the new Node.js native test runner, and [`viem`](https://viem.sh/).
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+### 1. Job Lifecycle Flow
+```
+Create Job → Approve PYUSD → Fund Job → Complete/Refund
+```
+
+1. **Create Job**: Call `createJob()` to create a new job escrow
+2. **Approve PYUSD**: Approve the escrow contract to spend your PYUSD tokens
+3. **Fund Job**: Call `fundJob()` to transfer PYUSD into the contract
+4. **Complete/Refund**: Release funds to employee or refund to employer
+
+### 2. Job States
+- **Created**: Job is created but not yet funded
+- **Funded**: PYUSD has been transferred to the contract
+- **Completed**: Funds released to employee
+- **Refunded**: Funds returned to employer (after deadline)
+
+## Contract Features
+
+### EthJobsEscrow
+- ✅ **Multiple Jobs**: Single contract handles unlimited jobs
+- ✅ **Job Management**: Create, fund, release, and refund jobs
+- ✅ **PYUSD Integration**: Full ERC20 token support
+- ✅ **Access Control**: Only employers can manage their jobs
+- ✅ **Deadline Enforcement**: Automatic refund eligibility
+- ✅ **Event Emission**: Full transparency for all actions
+- ✅ **Query Functions**: Get job details, employer/employee jobs
 
 ## Usage
 
-### Running Tests
+### 1. Deploy Contract
+```bash
+# Deploy escrow contract
+npx hardhat ignition deploy ignition/modules/EthJobsEscrow.ts --network sepolia
+```
 
-To run all the tests in the project, execute the following command:
+### 2. Create New Job
+```solidity
+// Call on escrow contract
+createJob(
+    employeeAddress,    // Employee's wallet address
+    deadlineTimestamp,  // Unix timestamp for deadline
+    amount             // PYUSD amount (in wei, 6 decimals)
+)
+// Returns: jobId (uint256)
+```
 
-```shell
+### 3. Fund the Job
+```solidity
+// Call on escrow contract
+fundJob(jobId)  // Transfers PYUSD from employer to contract
+```
+
+### 4. Complete or Refund
+```solidity
+// Release funds to employee (job completed)
+releaseFunds(jobId)
+
+// Refund to employer (deadline passed)
+refund(jobId)
+```
+
+## Key Functions
+
+### Job Management
+- `createJob(employee, deadline, amount)` → `jobId`
+- `fundJob(jobId)` - Fund a job with PYUSD
+- `releaseFunds(jobId)` - Pay employee
+- `refund(jobId)` - Return funds to employer
+
+### Query Functions
+- `getJob(jobId)` - Get complete job details
+- `getEmployerJobs(employer)` - Get all jobs for an employer
+- `getEmployeeJobs(employee)` - Get all jobs for an employee
+- `getTotalJobs()` - Get total number of jobs
+- `getPYUSDBalance()` - Get contract's PYUSD balance
+
+## Scripts
+
+### approve-escrow.ts
+- Approves PYUSD spending for the escrow contract
+- Checks balance and current allowance
+- Provides detailed logging of the approval process
+
+## Contract Addresses
+
+- **PYUSD Token**: `0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9` (Sepolia)
+- **Escrow Contract**: Deploy and update this address
+
+## Testing
+
+```bash
+# Run tests
 npx hardhat test
+
+# Run specific test file
+npx hardhat test test/EthJobsEscrow.ts
 ```
 
-You can also selectively run the Solidity or `node:test` tests:
+## Key Benefits
 
-```shell
-npx hardhat test solidity
-npx hardhat test nodejs
+1. **Single Contract**: Everything in one place, easier to manage
+2. **Multiple Jobs**: Handle unlimited jobs with unique IDs
+3. **Gas Efficient**: No need to deploy new contracts per job
+4. **Simple Workflow**: Create → Approve → Fund → Complete/Refund
+5. **Full Control**: Employers manage their own jobs independently
+6. **Scalable**: Mapping-based storage for unlimited jobs
+
+## Security Features
+
+- ✅ Access control modifiers (`onlyEmployer`)
+- ✅ Job existence validation (`jobExists`)
+- ✅ Funding state checks (`onlyWhenFunded`)
+- ✅ Deadline validation
+- ✅ PYUSD transfer safety checks
+- ✅ Event emission for transparency
+- ✅ No direct ETH acceptance (PYUSD only)
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Compile contracts
+npx hardhat compile
+
+# Deploy to Sepolia
+npx hardhat ignition deploy ignition/modules/EthJobsEscrow.ts --network sepolia
 ```
 
-### Make a deployment to Sepolia
+## Environment Variables
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
-
-To run the deployment to a local chain:
-
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
+```bash
+export SEPOLIA_PRIVATE_KEY="your_private_key_here"
+export SEPOLIA_RPC_URL="your_rpc_url_here"
+export ETHERSCAN_API_KEY="your_etherscan_api_key_here"
 ```
 
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
+## Example Workflow
 
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
+1. **Deploy**: Deploy the escrow contract
+2. **Create Job**: Call `createJob()` with employee address, deadline, and amount
+3. **Approve**: Approve PYUSD spending for the escrow contract
+4. **Fund**: Call `fundJob(jobId)` to transfer PYUSD
+5. **Complete**: Call `releaseFunds(jobId)` when job is done
+6. **Or Refund**: Call `refund(jobId)` if deadline passes
 
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
-
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
-
-After setting the variable, you can run the deployment with the Sepolia network:
-
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+This simplified architecture makes it much easier to use and understand while maintaining all the security and functionality you need!
