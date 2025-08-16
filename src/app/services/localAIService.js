@@ -22,7 +22,7 @@ const EMPLOYER_DESCRIPTIONS = [
     `Company raw data: ${DATA_TAG}\n\nWrite exactly one paragraph describing this employer. Output the paragraph only.`,
     `Given: ${DATA_TAG}\n\nReturn a brief, professional employer summary. The response must contain only the summary text.`
 ];
-const MGS_NO_DETAILS = 'Details not available.';
+const MSG_NO_DETAILS = 'Details not available.';
 
 let generator = null;
 
@@ -38,9 +38,9 @@ let generator = null;
  */
 async function askWithData(prompt, data) {
 
-    if (! data) return MGS_NO_DETAILS;
+    if (! data) return MSG_NO_DETAILS;
     const values_ = JSON.stringify(data);
-    if (! values_) return MGS_NO_DETAILS;
+    if (! values_) return MSG_NO_DETAILS;
     return await askLocalAI(prompt.replace(DATA_TAG, values_));
 
 }
@@ -112,3 +112,6 @@ export async function describeEmployer(data) {
     return await askWithData(randomFromArray(EMPLOYER_DESCRIPTIONS), data);
 
 }
+
+// This export serves test purposes only.
+export { randomFromArray, askWithData, MSG_NO_DETAILS };
