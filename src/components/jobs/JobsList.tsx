@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react'
 import { Job } from '@/lib/database.types'
 import JobCard from './JobCard'
 import { supabase } from '@/lib/supabase'
+import { JobFilters } from '@/components/ui/SearchAndFilters'
 
 interface JobsListProps {
   searchQuery?: string
-  filters?: any
+  filters?: JobFilters
 }
 
 export default function JobsList({ searchQuery, filters }: JobsListProps) {
@@ -41,6 +42,17 @@ export default function JobsList({ searchQuery, filters }: JobsListProps) {
       // Add search functionality if query exists
       if (searchQuery && searchQuery.trim()) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+      }
+
+      // Add filter functionality
+      if (filters?.chains && filters.chains.length > 0) {
+        // Filter by blockchain networks - using overlaps operator for array fields
+        query = query.overlaps('blockchain_networks', filters.chains)
+      }
+
+      if (filters?.stacks && filters.stacks.length > 0) {
+        // Filter by tech stack - using overlaps operator for array fields
+        query = query.overlaps('tech_stack', filters.stacks)
       }
 
       const { data, error: fetchError } = await query
