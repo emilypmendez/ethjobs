@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Job } from '@/lib/database.types'
 import JobCard from './JobCard'
 import { supabase } from '@/lib/supabase'
@@ -16,11 +16,7 @@ export default function JobsList({ searchQuery, filters }: JobsListProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchJobs()
-  }, [searchQuery, filters])
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -33,7 +29,10 @@ export default function JobsList({ searchQuery, filters }: JobsListProps) {
             id,
             name,
             logo_url,
-            website
+            website,
+            description,
+            created_at,
+            updated_at
           )
         `)
         .eq('is_active', true)
@@ -70,7 +69,11 @@ export default function JobsList({ searchQuery, filters }: JobsListProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [searchQuery, filters])
+
+  useEffect(() => {
+    fetchJobs()
+  }, [fetchJobs])
 
   if (loading) {
     return (
