@@ -6,7 +6,7 @@ export default function HeroSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Main Heading */}
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-          <span className="text-blue-600">Web3 Jobs</span> with{' '}
+          <span className="text-blue-600">Find & List Jobs</span> with{' '}
           <span className="text-purple-600">Impact</span>
         </h1>
 
@@ -20,7 +20,7 @@ export default function HeroSection() {
           Charity integration
         </p>
 
-        {/* Search Bar */}
+        {/* Search Bar
         <div className="max-w-2xl mx-auto mb-8">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -37,7 +37,7 @@ export default function HeroSection() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Stats or Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
