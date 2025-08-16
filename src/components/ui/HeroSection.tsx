@@ -1,5 +1,4 @@
 
-
 export default function HeroSection() {
   return (
     <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 py-16">
