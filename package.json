@@ -13,7 +13,6 @@
   },
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
   "main": "jest.config.js",
   "scripts": {
     "dev": "next dev --turbopack",
