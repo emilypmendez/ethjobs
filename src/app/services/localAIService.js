@@ -26,6 +26,16 @@ const MGS_NO_DETAILS = 'Details not available.';
 
 let generator = null;
 
+/**
+ * Ask model with JSON data.
+ * ------------------------_
+ * 
+ * @param {string} prompt Prompt according to entity type.
+ * @param {object} data   Descriptive data about the entity.
+ * @returns (string)      The answer of the model or a default message in case
+ *                        no prompt was given or JSON encoding of the data
+ *                        failed.
+ */
 async function askWithData(prompt, data) {
 
     if (! data) return MGS_NO_DETAILS;
@@ -35,19 +45,39 @@ async function askWithData(prompt, data) {
 
 }
 
+/**
+ * Initialize generator if needed and hold the thread during initialization.
+ * -------------------------------------------------------------------------
+ */
 async function initGenerator() {
 
     if (generator) return;
-    generator = await pipeline('text-generation', 'Xenova/gpt2', {quantized: true});
+    generator = await pipeline('text-generation', 'Xenova/gpt2',
+                               {quantized: true});
 
 }
 
+/**
+ * Return random element from an array.
+ * ------------------------------------
+ * 
+ * @param {array} arr Array to select random output from.
+ * @returns (any)     The selected random element of the array.
+ */
 function randomFromArray(arr) {
 
     return arr[Math.floor(Math.random() * arr.length)];
 
 }
 
+/**
+ * Ask model.
+ * ----------
+ * 
+ * @param {string} prompt The prompt to ask.
+ * @param {object} opts   Additional data to fine-tune the expected answer.
+ * @returns (string)      The answer of the model.
+ */
 export async function askLocalAI(prompt, opts = {}) {
 
     await initGenerator();
@@ -57,16 +87,28 @@ export async function askLocalAI(prompt, opts = {}) {
 
 }
 
+/**
+ * Ask the model to describe employee.
+ * -----------------------------------
+ * 
+ * @param {object} data The data that describes the employee.
+ * @returns (string)    The answer of the model or a default message.
+ */
 export async function describeEmployee(data) {
 
-    // return await askWithData(EMPLOYEE_DESCRIPTION, data);
     return await askWithData(randomFromArray(EMPLOYEE_DESCRIPTIONS), data);
 
 }
 
+/**
+ * Ask the model to describe employer.
+ * -----------------------------------
+ * 
+ * @param {object} data The data that describes the employer.
+ * @returns (string)    The answer of the model or a default message.
+ */
 export async function describeEmployer(data) {
 
-    // return await askWithData(EMPLOYER_DESCRIPTION, data);
     return await askWithData(randomFromArray(EMPLOYER_DESCRIPTIONS), data);
 
 }
