@@ -4,9 +4,14 @@ import { useState } from 'react'
 import { Search, Filter, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+export interface JobFilters {
+  chains: string[]
+  stacks: string[]
+}
+
 interface SearchAndFiltersProps {
   onSearch?: (query: string) => void
-  onFilterChange?: (filters: any) => void
+  onFilterChange?: (filters: JobFilters) => void
   className?: string
 }
 
@@ -26,6 +31,30 @@ export default function SearchAndFilters({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     onSearch?.(searchQuery)
+  }
+
+  const handleChainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedChain = e.target.value
+    const newChains = selectedChain === 'All Chains' ? [] : [selectedChain]
+    setSelectedChains(newChains)
+
+    // Call onFilterChange with updated filters
+    onFilterChange?.({
+      chains: newChains,
+      stacks: selectedStacks
+    })
+  }
+
+  const handleStackChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedStack = e.target.value
+    const newStacks = selectedStack === 'All Stacks' ? [] : [selectedStack]
+    setSelectedStacks(newStacks)
+
+    // Call onFilterChange with updated filters
+    onFilterChange?.({
+      chains: selectedChains,
+      stacks: newStacks
+    })
   }
 
   return (
@@ -80,10 +109,15 @@ export default function SearchAndFilters({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Chain Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="chain-select" className="block text-sm font-medium text-gray-700 mb-2">
                   Blockchain Networks
                 </label>
-                <select className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                <select
+                  id="chain-select"
+                  value={selectedChains.length === 0 ? 'All Chains' : selectedChains[0]}
+                  onChange={handleChainChange}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
                   {chains.map((chain) => (
                     <option key={chain} value={chain}>
                       {chain}
@@ -94,10 +128,15 @@ export default function SearchAndFilters({
 
               {/* Stack Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="stack-select" className="block text-sm font-medium text-gray-700 mb-2">
                   Tech Stack
                 </label>
-                <select className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                <select
+                  id="stack-select"
+                  value={selectedStacks.length === 0 ? 'All Stacks' : selectedStacks[0]}
+                  onChange={handleStackChange}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
                   {stacks.map((stack) => (
                     <option key={stack} value={stack}>
                       {stack}

@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Job } from '@/lib/database.types'
 import JobCard from './JobCard'
 import { supabase } from '@/lib/supabase'
+import { JobFilters } from '@/components/ui/SearchAndFilters'
 
 interface JobsListProps {
   searchQuery?: string
-  filters?: any
+  filters?: JobFilters
 }
 
 export default function JobsList({ searchQuery, filters }: JobsListProps) {
@@ -15,11 +16,7 @@ export default function JobsList({ searchQuery, filters }: JobsListProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchJobs()
-  }, [searchQuery, filters])
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -32,7 +29,10 @@ export default function JobsList({ searchQuery, filters }: JobsListProps) {
             id,
             name,
             logo_url,
-            website
+            website,
+            description,
+            created_at,
+            updated_at
           )
         `)
         .eq('is_active', true)
@@ -41,6 +41,17 @@ export default function JobsList({ searchQuery, filters }: JobsListProps) {
       // Add search functionality if query exists
       if (searchQuery && searchQuery.trim()) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+      }
+
+      // Add filter functionality
+      if (filters?.chains && filters.chains.length > 0) {
+        // Filter by blockchain networks - using overlaps operator for array fields
+        query = query.overlaps('blockchain_networks', filters.chains)
+      }
+
+      if (filters?.stacks && filters.stacks.length > 0) {
+        // Filter by tech stack - using overlaps operator for array fields
+        query = query.overlaps('tech_stack', filters.stacks)
       }
 
       const { data, error: fetchError } = await query
@@ -58,7 +69,11 @@ export default function JobsList({ searchQuery, filters }: JobsListProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [searchQuery, filters])
+
+  useEffect(() => {
+    fetchJobs()
+  }, [fetchJobs])
 
   if (loading) {
     return (
