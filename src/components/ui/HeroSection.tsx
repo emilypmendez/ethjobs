@@ -1,4 +1,3 @@
-// import { Search } from 'lucide-react'
 
 export default function HeroSection() {
   return (
@@ -19,25 +18,6 @@ export default function HeroSection() {
           {' • '}
           Charity integration
         </p>
-
-        {/* Search Bar
-        <div className="max-w-2xl mx-auto mb-8">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-6 w-6 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search Web3 jobs..."
-              className="block w-full pl-12 pr-32 py-4 border border-gray-300 rounded-lg text-lg leading-6 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-            />
-            <div className="absolute inset-y-0 right-0 flex items-center">
-              <button className="bg-blue-600 text-white px-8 py-4 rounded-r-lg font-medium hover:bg-blue-700 transition-colors">
-                Search Jobs
-              </button>
-            </div>
-          </div>
-        </div> */}
 
         {/* Stats or Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
