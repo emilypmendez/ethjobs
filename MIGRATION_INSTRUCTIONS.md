@@ -3,9 +3,10 @@
 ## Errors You May Be Seeing
 1. "Could not find the 'available_start_date' column of 'profiles' in the schema cache"
 2. "new row violates row-level security policy for table 'profiles'"
+3. "new row for relation 'profiles' violates check constraint 'profiles_experience_level_check'"
 
 ## Root Cause
-The database schema was set up for Supabase Auth users, but we're using Web3 wallet authentication. We need to update the database to work with wallet addresses.
+The database schema was set up for Supabase Auth users, but we're using Web3 wallet authentication. Additionally, there are case-sensitivity issues with experience level values. We need to update the database to work with wallet addresses and correct data formats.
 
 ## Solution Options
 

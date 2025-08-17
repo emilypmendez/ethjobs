@@ -25,10 +25,10 @@ interface ProfileFormData {
 }
 
 const EXPERIENCE_LEVELS = [
-  { value: 'entry', label: 'Entry Level (0-2 years)' },
-  { value: 'mid', label: 'Mid Level (2-5 years)' },
-  { value: 'senior', label: 'Senior Level (5+ years)' },
-  { value: 'lead', label: 'Lead/Principal (8+ years)' }
+  { value: 'Entry', label: 'Entry Level (0-2 years)' },
+  { value: 'Mid', label: 'Mid Level (2-5 years)' },
+  { value: 'Senior', label: 'Senior Level (5+ years)' },
+  { value: 'Lead', label: 'Lead/Principal (8+ years)' }
 ]
 
 const WEB3_EXPERIENCE = [

@@ -100,7 +100,7 @@ export function filterAndRankJobs(
       const jobLevel = job.experience_level.toLowerCase()
       
       // Allow some flexibility in experience level matching
-      const levelHierarchy = ['entry', 'mid', 'senior', 'lead']
+      const levelHierarchy = ['entry', 'mid', 'senior', 'lead', 'executive']
       const userLevelIndex = levelHierarchy.indexOf(userLevel)
       const jobLevelIndex = levelHierarchy.indexOf(jobLevel)
       
