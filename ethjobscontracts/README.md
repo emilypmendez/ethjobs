@@ -2,13 +2,15 @@
 
 A decentralized escrow system for job payments using PYUSD tokens on Ethereum Sepolia testnet.
 
+
+
 ## Overview
 
 This project implements a smart contract system for job escrows using PYUSD tokens with integrated GitHub issue verification.
 
 **Key Components:**
-1. **EthJobsEscrow**: Main escrow contract for job payments
-2. **GitHubVerifier**: Chainlink Functions integration for GitHub issue verification
+1. **EthJobsEscrow**: Main escrow contract for job payments - 0x84c823a0E11ad6c0Da9021e8311e4A031E4256F4
+2. **GitHubVerifier**: Chainlink Functions integration for GitHub issue verification - 0xBdfA8353BB214Fe6b52f68C59d7C662464f96C81
 
 ## How It Works
 

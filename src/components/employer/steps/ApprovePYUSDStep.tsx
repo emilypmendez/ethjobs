@@ -17,7 +17,7 @@ interface ApprovePYUSDStepProps {
 // PYUSD contract address on Ethereum mainnet
 const PYUSD_CONTRACT_ADDRESS = '0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9'
 // Demo escrow contract address (would be the actual deployed contract)
-const ESCROW_CONTRACT_ADDRESS = '0x1234567890123456789012345678901234567890'
+const ESCROW_CONTRACT_ADDRESS = '0xBdfA8353BB214Fe6b52f68C59d7C662464f96C81'
 
 // IERC20 ABI for approval function
 const IERC20_ABI = [
