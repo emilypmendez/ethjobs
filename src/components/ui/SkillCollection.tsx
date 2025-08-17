@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, X, Plus } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SkillCollectionProps {
@@ -177,7 +177,7 @@ export default function SkillCollection({
               <div className="px-4 py-3 text-gray-500 text-sm">
                 {inputValue.trim() ? (
                   <div>
-                    No matching skills found. Press Enter to add "{inputValue.trim()}" as a custom skill.
+                    No matching skills found. Press Enter to add &quot;{inputValue.trim()}&quot; as a custom skill.
                   </div>
                 ) : (
                   'Start typing to search for skills...'
