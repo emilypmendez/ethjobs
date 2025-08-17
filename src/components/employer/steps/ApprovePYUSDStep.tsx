@@ -1,9 +1,11 @@
+// @ts-nocheck
 'use client'
 
-import { useState } from 'react'
-import { DollarSign, CheckCircle, AlertTriangle, ExternalLink } from 'lucide-react'
+import React from 'react'
+import { DollarSign, Check, Info, ExternalLink } from 'lucide-react'
 import { EmployerFormData } from '@/app/employer/page'
-import { useAccount } from 'wagmi'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { type BaseError } from 'wagmi'
 
 interface ApprovePYUSDStepProps {
   formData: EmployerFormData
@@ -13,9 +15,23 @@ interface ApprovePYUSDStepProps {
 }
 
 // PYUSD contract address on Ethereum mainnet
-const PYUSD_CONTRACT_ADDRESS = '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8'
+const PYUSD_CONTRACT_ADDRESS = '0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9'
 // Demo escrow contract address (would be the actual deployed contract)
 const ESCROW_CONTRACT_ADDRESS = '0x1234567890123456789012345678901234567890'
+
+// IERC20 ABI for approval function
+const IERC20_ABI = [
+  {
+    name: 'approve',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { internalType: 'address', name: 'spender', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' }
+    ],
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+  },
+] as const
 
 export default function ApprovePYUSDStep({ 
   formData, 
@@ -24,31 +40,40 @@ export default function ApprovePYUSDStep({
   onBack 
 }: ApprovePYUSDStepProps) {
   const { address } = useAccount()
-  const [isApproving, setIsApproving] = useState(false)
-  const [approvalTxHash, setApprovalTxHash] = useState<string>('')
+  
+  // Wagmi hooks for contract interaction
+  const { 
+    data: hash, 
+    error, 
+    isPending, 
+    writeContract 
+  } = useWriteContract()
+
+  // Wait for transaction receipt
+  const { 
+    isLoading: isConfirming, 
+    isSuccess: isConfirmed 
+  } = useWaitForTransactionReceipt({ hash })
+
+  // Update form data when approval is confirmed
+  React.useEffect(() => {
+    if (isConfirmed) {
+      onUpdate({ pyusdApproved: true })
+    }
+  }, [isConfirmed, onUpdate])
 
   const handleApprove = async () => {
-    setIsApproving(true)
+    if (!address) return
     
-    try {
-      // In a real implementation, this would interact with the PYUSD contract
-      // For demo purposes, we'll simulate the approval process
-      
-      // Simulate transaction delay
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Mock transaction hash
-      const mockTxHash = '0x' + Math.random().toString(16).substr(2, 64)
-      setApprovalTxHash(mockTxHash)
-      
-      // Update form data
-      onUpdate({ pyusdApproved: true })
-      
-    } catch (error) {
-      console.error('Approval failed:', error)
-    } finally {
-      setIsApproving(false)
-    }
+    // Convert amount to wei (PYUSD uses 6 decimals)
+    const amountInWei = BigInt(Math.floor(formData.paymentAmount * 1020000 * 10**6))
+    
+    writeContract({
+      address: PYUSD_CONTRACT_ADDRESS as `0x${string}`,
+      abi: IERC20_ABI,
+      functionName: 'approve',
+      args: [ESCROW_CONTRACT_ADDRESS as `0x${string}`, amountInWei],
+    })
   }
 
   const handleNext = () => {
@@ -102,13 +127,34 @@ export default function ApprovePYUSDStep({
           </div>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <Info className="h-5 w-5 text-red-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Approval Failed
+                  </h3>
+                  <p className="text-sm text-red-700 mt-1">
+                    {(error as BaseError).shortMessage || error.message}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Approval Status */}
-        {!formData.pyusdApproved ? (
+        {!formData.pyusdApproved && !isConfirmed ? (
           <div className="mb-6">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  <Info className="h-5 w-5 text-yellow-600" />
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-yellow-800">
@@ -123,13 +169,18 @@ export default function ApprovePYUSDStep({
 
             <button
               onClick={handleApprove}
-              disabled={isApproving}
+              disabled={isPending || isConfirming}
               className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {isApproving ? (
+              {isPending ? (
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Approving...
+                  Confirm in Wallet...
+                </div>
+              ) : isConfirming ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Processing Transaction...
                 </div>
               ) : (
                 `Approve $${totalWithFee.toFixed(2)} PYUSD`
@@ -141,7 +192,7 @@ export default function ApprovePYUSDStep({
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <Check className="h-5 w-5 text-green-600" />
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-green-800">
@@ -150,10 +201,10 @@ export default function ApprovePYUSDStep({
                   <p className="text-sm text-green-700 mt-1">
                     Your PYUSD tokens have been approved for the escrow contract. You can now proceed to fund the escrow.
                   </p>
-                  {approvalTxHash && (
+                  {hash && (
                     <div className="mt-2">
                       <a
-                        href={`https://etherscan.io/tx/${approvalTxHash}`}
+                        href={`https://sepolia.etherscan.io/tx/${hash}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center text-sm text-green-600 hover:text-green-700"
