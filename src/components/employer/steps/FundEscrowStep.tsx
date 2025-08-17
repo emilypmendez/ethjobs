@@ -1,8 +1,44 @@
+// @ts-nocheck
 'use client'
 
-import { useState } from 'react'
-import { Lock, AlertTriangle, CheckCircle, ExternalLink, Calendar, DollarSign, FileText } from 'lucide-react'
+import React, { useState } from 'react'
+import { Lock, Info, Check, ExternalLink, Calendar, DollarSign, FileText } from 'lucide-react'
 import { EmployerFormData } from '@/app/employer/page'
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi'
+import { type BaseError } from 'wagmi'
+
+// Contract ABI
+const ESCROW_ABI = [
+  {
+    inputs: [
+      { internalType: 'address', name: '_employee', type: 'address' },
+      { internalType: 'uint256', name: '_deadline', type: 'uint256' },
+      { internalType: 'uint256', name: '_amount', type: 'uint256' },
+      { internalType: 'string', name: '_githubIssue', type: 'string' }
+    ],
+    name: 'createJob',
+    outputs: [{ internalType: 'uint256', name: 'jobId', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [{ internalType: 'uint256', name: '_jobId', type: 'uint256' }],
+    name: 'fundJob',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'nextJobId',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function'
+  }
+] as const
+
+// Contract address (you'll need to update this with your deployed contract)
+const ESCROW_CONTRACT_ADDRESS = '0x84c823a0E11ad6c0Da9021e8311e4A031E4256F4'
 
 interface FundEscrowStepProps {
   formData: EmployerFormData
@@ -17,37 +53,91 @@ export default function FundEscrowStep({
   onComplete, 
   onBack 
 }: FundEscrowStepProps) {
-  const [isFunding, setIsFunding] = useState(false)
-  const [fundingTxHash, setFundingTxHash] = useState<string>('')
+  const [jobId, setJobId] = useState<number | null>(null)
+  const [step, setStep] = useState<'create' | 'fund' | 'complete'>('create')
+  
+  // Wagmi hooks for contract interaction
+  const { 
+    data: createJobHash, 
+    error: createJobError, 
+    isPending: isCreatingJob, 
+    writeContract: writeCreateJob 
+  } = useWriteContract()
 
-  const handleFundEscrow = async () => {
-    setIsFunding(true)
-    
-    try {
-      // In a real implementation, this would interact with the escrow contract
-      // For demo purposes, we'll simulate the funding process
-      
-      // Simulate transaction delay
-      await new Promise(resolve => setTimeout(resolve, 3000))
-      
-      // Mock transaction hash
-      const mockTxHash = '0x' + Math.random().toString(16).substr(2, 64)
-      setFundingTxHash(mockTxHash)
-      
-      // Update form data
-      onUpdate({ escrowFunded: true })
-      
-      // Auto-complete after successful funding
-      setTimeout(() => {
-        onComplete()
-      }, 2000)
-      
-    } catch (error) {
-      console.error('Funding failed:', error)
-    } finally {
-      setIsFunding(false)
+  const { 
+    data: fundJobHash, 
+    error: fundJobError, 
+    isPending: isFundingJob, 
+    writeContract: writeFundJob 
+  } = useWriteContract()
+
+  // Wait for createJob transaction
+  const { 
+    isLoading: isCreatingJobConfirming, 
+    isSuccess: isCreateJobConfirmed 
+  } = useWaitForTransactionReceipt({ hash: createJobHash })
+
+  // Wait for fundJob transaction
+  const { 
+    isLoading: isFundingJobConfirming, 
+    isSuccess: isFundJobConfirmed 
+  } = useWaitForTransactionReceipt({ hash: fundJobHash })
+
+  // Read nextJobId to get the current job ID
+  const { data: nextJobId } = useReadContract({
+    address: ESCROW_CONTRACT_ADDRESS as `0x${string}`,
+    abi: ESCROW_ABI,
+    functionName: 'nextJobId',
+  })
+
+  // Handle job creation
+  const handleCreateJob = () => {
+    const employeeAddress = '0x1a343eFB966E63bfA25A2b368455448f02466Ffc'
+    const deadline = 1788192000000
+    const amount = BigInt(Math.floor(formData.paymentAmount * 1.02 * 10**6)) // Convert to wei with 2% fee (PYUSD uses 6 decimals)
+    const githubIssue = 'https://github.com/emilypmendez/ethjobs/issues/6'
+
+    writeCreateJob({
+      address: ESCROW_CONTRACT_ADDRESS as `0x${string}`,
+      abi: ESCROW_ABI,
+      functionName: 'createJob',
+      args: [employeeAddress as `0x${string}`, BigInt(deadline), amount, githubIssue],
+    })
+  }
+
+  // Handle job funding
+  const handleFundJob = () => {
+    if (nextJobId && nextJobId > 0) {
+      const currentJobId = Number(nextJobId) - 1
+      setJobId(currentJobId)
+      console.log('currentJobId', currentJobId)
+      writeFundJob({
+        address: ESCROW_CONTRACT_ADDRESS as `0x${string}`,
+        abi: ESCROW_ABI,
+        functionName: 'fundJob',
+        args: [BigInt(currentJobId)],
+      })
     }
   }
+
+  // Update step when createJob is confirmed
+  React.useEffect(() => {
+    if (isCreateJobConfirmed) {
+      setStep('fund')
+    }
+  }, [isCreateJobConfirmed])
+
+  // Update step when fundJob is confirmed
+  React.useEffect(() => {
+    if (isFundJobConfirmed) {
+      setStep('complete')
+      onUpdate({ escrowFunded: true })
+      // Redirect to employer dashboard after successful funding
+      setTimeout(() => {
+        window.location.href = '/employer/dashboard'
+      }, 2000)
+    }
+  }, [isFundJobConfirmed, onUpdate])
 
   const totalAmount = formData.paymentAmount
   const platformFee = totalAmount * 0.02 // 2% platform fee
@@ -129,7 +219,7 @@ export default function FundEscrowStep({
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <div className="flex">
             <div className="flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              <Info className="h-5 w-5 text-yellow-600" />
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-yellow-800">
@@ -166,49 +256,156 @@ export default function FundEscrowStep({
           </div>
         </div>
 
-        {/* Funding Status */}
-        {!formData.escrowFunded ? (
+        {/* Error Display */}
+        {(createJobError || fundJobError) && (
           <div className="mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <Info className="h-5 w-5 text-red-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Transaction Failed
+                  </h3>
+                  <p className="text-sm text-red-700 mt-1">
+                    {createJobError ? (createJobError as BaseError).shortMessage || createJobError.message : ''}
+                    {fundJobError ? (fundJobError as BaseError).shortMessage || fundJobError.message : ''}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 1: Create Job */}
+        {step === 'create' && (
+          <div className="mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <Info className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-blue-800">
+                    Step 1: Create Job
+                  </h3>
+                  <p className="text-sm text-blue-700 mt-1">
+                    First, create the job in the smart contract. This will generate a job ID that you'll need for funding.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <button
-              onClick={handleFundEscrow}
-              disabled={isFunding}
+              onClick={handleCreateJob}
+              disabled={isCreatingJob || isCreatingJobConfirming}
               className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {isFunding ? (
+              {isCreatingJob ? (
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Funding Escrow & Posting Job...
+                  Creating Job...
+                </div>
+              ) : isCreatingJobConfirming ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Processing Job Creation...
                 </div>
               ) : (
-                'Fund Escrow & Post Job'
+                'Create Job'
               )}
             </button>
+
+            {createJobHash && (
+              <div className="mt-2 text-center">
+                <a
+                  href={`https://sepolia.etherscan.io/tx/${createJobHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700"
+                >
+                  View job creation transaction
+                  <ExternalLink className="h-3 w-3 ml-1" />
+                </a>
+              </div>
+            )}
           </div>
-        ) : (
+        )}
+
+        {/* Step 2: Fund Job */}
+        {step === 'fund' && (
+          <div className="mb-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <Check className="h-5 w-5 text-green-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-green-800">
+                    Step 2: Fund Job
+                  </h3>
+                  <p className="text-sm text-green-700 mt-1">
+                    Job created successfully! Now fund the escrow with PYUSD tokens to complete the process.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleFundJob}
+              disabled={isFundingJob || isFundingJobConfirming}
+              className="w-full bg-green-600 text-white py-4 px-6 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {isFundingJob ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Funding Job...
+                </div>
+              ) : isFundingJobConfirming ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Processing Funding...
+                </div>
+              ) : (
+                'Fund Job'
+              )}
+            </button>
+
+            {fundJobHash && (
+              <div className="mt-2 text-center">
+                <a
+                  href={`https://sepolia.etherscan.io/tx/${fundJobHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-sm text-green-600 hover:text-green-700"
+                >
+                  View funding transaction
+                  <ExternalLink className="h-3 w-3 ml-1" />
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Complete */}
+        {step === 'complete' && (
           <div className="mb-6">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <Check className="h-5 w-5 text-green-600" />
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-green-800">
-                    Escrow Funded Successfully!
+                    Job Posted & Escrow Funded Successfully!
                   </h3>
                   <p className="text-sm text-green-700 mt-1">
-                    Your job has been posted and the escrow has been funded. Redirecting to your dashboard...
+                    Your job has been posted and the escrow has been funded. Redirecting to employer dashboard...
                   </p>
-                  {fundingTxHash && (
-                    <div className="mt-2">
-                      <a
-                        href={`https://etherscan.io/tx/${fundingTxHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-sm text-green-600 hover:text-green-700"
-                      >
-                        View transaction
-                        <ExternalLink className="h-3 w-3 ml-1" />
-                      </a>
+                  {jobId !== null && (
+                    <div className="mt-2 text-sm text-green-600">
+                      Job ID: {jobId}
                     </div>
                   )}
                 </div>
