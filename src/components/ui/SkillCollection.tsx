@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { ChevronDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -52,11 +52,22 @@ export default function SkillCollection({
   
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const prevInitialSkillsRef = useRef<string[]>([])
+
+  // Memoize initialSkills to prevent unnecessary re-renders
+  const memoizedInitialSkills = useMemo(() => initialSkills, [JSON.stringify(initialSkills)])
 
   // Update selected skills when initialSkills changes
   useEffect(() => {
-    setSelectedSkills(initialSkills)
-  }, [initialSkills])
+    // Only update if the arrays are actually different
+    const prevSkills = prevInitialSkillsRef.current
+    const currentSkills = memoizedInitialSkills
+
+    if (JSON.stringify(prevSkills) !== JSON.stringify(currentSkills)) {
+      setSelectedSkills(currentSkills)
+      prevInitialSkillsRef.current = currentSkills
+    }
+  }, [memoizedInitialSkills])
 
   // Filter skills based on input
   useEffect(() => {
