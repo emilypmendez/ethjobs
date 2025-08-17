@@ -5,7 +5,7 @@ import { sepolia } from "viem/chains";
 async function main() {
   // Constants
   const PYUSD_TOKEN = "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9";
-  const ESCROW_ADDRESS = "0x5603067027cF6C9798f108c5d3ec6Ad4b434cE9d";
+  const ESCROW_ADDRESS = "0x62aed97998B2BB16977EdD4638506DcC137840C2";
   const APPROVAL_AMOUNT = 10000n * 10n ** 6n; // 10,000 PYUSD (6 decimals)
   
   console.log("🚀 Starting PYUSD approval for escrow contract...");

@@ -2,6 +2,9 @@
   "name": "ethjobscontracts",
   "version": "1.0.0",
   "type": "module",
+  "dependencies": {
+    "@chainlink/contracts": "^0.8.0"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^3.0.0",
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
