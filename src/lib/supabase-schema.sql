@@ -8,6 +8,13 @@ CREATE TABLE companies (
   logo_url TEXT,
   website TEXT,
   description TEXT,
+  industry TEXT,
+  location TEXT,
+  employer_type TEXT CHECK (employer_type IN ('startup', 'dao', 'foundation', 'enterprise', 'protocol', 'individual')),
+  wallet_address TEXT,
+  verification_status TEXT DEFAULT 'pending' CHECK (verification_status IN ('pending', 'verified', 'rejected')),
+  verification_method TEXT CHECK (verification_method IN ('website', 'business')),
+  verified_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -27,7 +34,15 @@ CREATE TABLE jobs (
   blockchain_networks TEXT[] DEFAULT '{}',
   tech_stack TEXT[] DEFAULT '{}',
   experience_level TEXT NOT NULL CHECK (experience_level IN ('Entry', 'Mid', 'Senior', 'Lead', 'Executive')),
-  employment_type TEXT NOT NULL CHECK (employment_type IN ('Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship')),
+  employment_type TEXT NOT NULL CHECK (employment_type IN ('Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship', 'Project-based', 'Bounty')),
+  job_type TEXT CHECK (job_type IN ('Project-based', 'Contract', 'Part-Time', 'Full-Time', 'Bounty')),
+  blockchain TEXT,
+  payment_amount DECIMAL(18, 2),
+  project_deadline DATE,
+  github_issue_link TEXT,
+  escrow_contract_address TEXT,
+  escrow_job_id INTEGER,
+  escrow_status TEXT DEFAULT 'pending' CHECK (escrow_status IN ('pending', 'funded', 'completed', 'refunded')),
   posted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   expires_at TIMESTAMP WITH TIME ZONE,
   is_active BOOLEAN DEFAULT true,
@@ -52,18 +67,90 @@ CREATE TABLE profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create employer_profiles table
+CREATE TABLE employer_profiles (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  wallet_address TEXT UNIQUE NOT NULL,
+  company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+  onboarding_step INTEGER DEFAULT 1 CHECK (onboarding_step BETWEEN 1 AND 6),
+  onboarding_completed BOOLEAN DEFAULT false,
+  onboarding_completed_at TIMESTAMP WITH TIME ZONE,
+  pyusd_approved BOOLEAN DEFAULT false,
+  pyusd_approval_tx_hash TEXT,
+  pyusd_approval_amount DECIMAL(18, 2),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create escrow_contracts table
+CREATE TABLE escrow_contracts (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  employer_address TEXT NOT NULL,
+  employee_address TEXT,
+  contract_address TEXT NOT NULL,
+  escrow_job_id INTEGER NOT NULL,
+  amount DECIMAL(18, 2) NOT NULL,
+  platform_fee DECIMAL(18, 2) NOT NULL,
+  total_amount DECIMAL(18, 2) NOT NULL,
+  deadline TIMESTAMP WITH TIME ZONE NOT NULL,
+  status TEXT DEFAULT 'created' CHECK (status IN ('created', 'funded', 'completed', 'refunded')),
+  funded_at TIMESTAMP WITH TIME ZONE,
+  completed_at TIMESTAMP WITH TIME ZONE,
+  refunded_at TIMESTAMP WITH TIME ZONE,
+  funding_tx_hash TEXT,
+  completion_tx_hash TEXT,
+  refund_tx_hash TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create transactions table
+CREATE TABLE transactions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  wallet_address TEXT NOT NULL,
+  transaction_type TEXT NOT NULL CHECK (transaction_type IN ('stake', 'payment', 'refund', 'escrow_fund', 'escrow_release', 'pyusd_approval')),
+  amount DECIMAL(18, 2) NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'PYUSD',
+  tx_hash TEXT,
+  block_number INTEGER,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
+  job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
+  escrow_contract_id UUID REFERENCES escrow_contracts(id) ON DELETE SET NULL,
+  description TEXT,
+  metadata JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_jobs_company_id ON jobs(company_id);
 CREATE INDEX idx_jobs_blockchain_networks ON jobs USING GIN(blockchain_networks);
 CREATE INDEX idx_jobs_tech_stack ON jobs USING GIN(tech_stack);
 CREATE INDEX idx_jobs_posted_at ON jobs(posted_at DESC);
 CREATE INDEX idx_jobs_is_active ON jobs(is_active);
+CREATE INDEX idx_jobs_escrow_status ON jobs(escrow_status);
 CREATE INDEX idx_profiles_wallet_address ON profiles(wallet_address);
+CREATE INDEX idx_companies_wallet_address ON companies(wallet_address);
+CREATE INDEX idx_companies_verification_status ON companies(verification_status);
+CREATE INDEX idx_employer_profiles_wallet_address ON employer_profiles(wallet_address);
+CREATE INDEX idx_employer_profiles_company_id ON employer_profiles(company_id);
+CREATE INDEX idx_escrow_contracts_job_id ON escrow_contracts(job_id);
+CREATE INDEX idx_escrow_contracts_employer_address ON escrow_contracts(employer_address);
+CREATE INDEX idx_escrow_contracts_status ON escrow_contracts(status);
+CREATE INDEX idx_transactions_wallet_address ON transactions(wallet_address);
+CREATE INDEX idx_transactions_type ON transactions(transaction_type);
+CREATE INDEX idx_transactions_status ON transactions(status);
+CREATE INDEX idx_transactions_job_id ON transactions(job_id);
+CREATE INDEX idx_transactions_created_at ON transactions(created_at DESC);
 
 -- Enable Row Level Security
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employer_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE escrow_contracts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for companies (public read)
 CREATE POLICY "Companies are viewable by everyone" ON companies
@@ -81,6 +168,36 @@ CREATE POLICY "Users can insert profiles" ON profiles
   FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "Users can update profiles" ON profiles
+  FOR UPDATE USING (true);
+
+-- RLS Policies for employer_profiles
+CREATE POLICY "Employer profiles are viewable by everyone" ON employer_profiles
+  FOR SELECT USING (true);
+
+CREATE POLICY "Users can insert employer profiles" ON employer_profiles
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Users can update their own employer profiles" ON employer_profiles
+  FOR UPDATE USING (true);
+
+-- RLS Policies for escrow_contracts
+CREATE POLICY "Escrow contracts are viewable by everyone" ON escrow_contracts
+  FOR SELECT USING (true);
+
+CREATE POLICY "Users can insert escrow contracts" ON escrow_contracts
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Users can update escrow contracts" ON escrow_contracts
+  FOR UPDATE USING (true);
+
+-- RLS Policies for transactions
+CREATE POLICY "Transactions are viewable by everyone" ON transactions
+  FOR SELECT USING (true);
+
+CREATE POLICY "Users can insert transactions" ON transactions
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Users can update transactions" ON transactions
   FOR UPDATE USING (true);
 
 -- Function to automatically update updated_at timestamp
