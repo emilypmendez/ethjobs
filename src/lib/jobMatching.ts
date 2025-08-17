@@ -81,7 +81,7 @@ export function filterAndRankJobs(
   jobs: Job[],
   filters: JobFilters
 ): JobMatchScore[] {
-  let filteredJobs = jobs.filter(job => {
+  const filteredJobs = jobs.filter(job => {
     // Filter by availability date
     if (filters.availableDate) {
       const availableDate = new Date(filters.availableDate)

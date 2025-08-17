@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAccount } from 'wagmi'
 import SkillCollection from '@/components/ui/SkillCollection'
 import ProgressIndicator from '@/components/ui/ProgressIndicator'
 import { StepNavigation } from '@/components/ui/FlowNavigation'
 import { createProfile, getProfileByWallet } from '@/lib/profile'
-import { ArrowLeft, Calendar, User, MapPin, Briefcase, Loader2, Code, Globe, DollarSign } from 'lucide-react'
+import { ArrowLeft, Calendar, User, MapPin, Briefcase, Code, Globe, DollarSign } from 'lucide-react'
 
 interface ProfileFormData {
   fullName: string
@@ -78,25 +78,7 @@ export default function CreateProfilePage() {
     }
   }, [isConnected, router])
 
-  // Load skills from localStorage and check for existing profile
-  useEffect(() => {
-    const savedSkills = localStorage.getItem('selectedSkills')
-    if (savedSkills) {
-      try {
-        const skills = JSON.parse(savedSkills)
-        setFormData(prev => ({ ...prev, skills }))
-      } catch (error) {
-        console.error('Error parsing saved skills:', error)
-      }
-    }
-
-    // Check if user already has a profile
-    if (isConnected && address) {
-      checkExistingProfile()
-    }
-  }, [isConnected, address])
-
-  const checkExistingProfile = async () => {
+  const checkExistingProfile = useCallback(async () => {
     if (!address) return
 
     try {
@@ -115,7 +97,25 @@ export default function CreateProfilePage() {
     } catch (error) {
       console.error('Error checking existing profile:', error)
     }
-  }
+  }, [address, router])
+
+  // Load skills from localStorage and check for existing profile
+  useEffect(() => {
+    const savedSkills = localStorage.getItem('selectedSkills')
+    if (savedSkills) {
+      try {
+        const skills = JSON.parse(savedSkills)
+        setFormData(prev => ({ ...prev, skills }))
+      } catch (error) {
+        console.error('Error parsing saved skills:', error)
+      }
+    }
+
+    // Check if user already has a profile
+    if (isConnected && address) {
+      checkExistingProfile()
+    }
+  }, [isConnected, address, checkExistingProfile])
 
   const handleInputChange = (field: keyof ProfileFormData, value: string | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -149,7 +149,7 @@ export default function CreateProfilePage() {
     setError(null)
 
     try {
-      const { profile, error } = await createProfile({
+      const { error } = await createProfile({
         walletAddress: address,
         fullName: formData.fullName,
         bio: formData.bio,
@@ -210,7 +210,7 @@ export default function CreateProfilePage() {
             Complete Your Web3 Developer Profile
           </h1>
           <p className="text-gray-600">
-            Now that your wallet is connected, let's build your professional profile to match you with the best Web3 opportunities
+            Now that your wallet is connected, let&apos;s build your professional profile to match you with the best Web3 opportunities
           </p>
         </div>
 
@@ -243,7 +243,7 @@ export default function CreateProfilePage() {
                   Basic Information
                 </h2>
                 <p className="text-gray-600 text-center">
-                  Let's start with your basic professional details
+                  Let&apos;s start with your basic professional details
                 </p>
               </div>
 
@@ -456,7 +456,7 @@ export default function CreateProfilePage() {
                   Skills & Availability
                 </h2>
                 <p className="text-gray-600 text-center">
-                  Add your technical skills and when you're available to start
+                  Add your technical skills and when you&apos;re available to start
                 </p>
               </div>
 

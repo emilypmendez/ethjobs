@@ -56,7 +56,7 @@ export default function NewLandingHero() {
                 </span>
               </div>
               <p className="text-gray-600 text-sm">
-                We'll help you find opportunities that match your expertise in the Web3 ecosystem.
+                We&apos;ll help you find opportunities that match your expertise in the Web3 ecosystem.
               </p>
             </div>
           )}
@@ -103,7 +103,7 @@ export default function NewLandingHero() {
         <div className="mt-12 text-center">
           <p className="text-gray-500 text-sm max-w-2xl mx-auto">
             ETHJobs connects talented developers with innovative Web3 companies. 
-            Whether you're a Solidity expert, frontend developer, or blockchain enthusiast, 
+            Whether you&apos;re a Solidity expert, frontend developer, or blockchain enthusiast,
             find your next opportunity in the decentralized future.
           </p>
         </div>

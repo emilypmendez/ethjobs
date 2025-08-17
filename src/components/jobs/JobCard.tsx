@@ -1,4 +1,4 @@
-import { MapPin, Clock, ExternalLink, Eye } from 'lucide-react'
+import { MapPin, Clock, Eye } from 'lucide-react'
 import { Job } from '@/lib/database.types'
 import BlockchainBadge from '@/components/ui/BlockchainBadge'
 import TechBadge from '@/components/ui/TechBadge'

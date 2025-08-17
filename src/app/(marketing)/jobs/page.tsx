@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Header from '@/components/ui/Header'
 import SearchAndFilters from '../../../components/ui/SearchAndFilters'
@@ -11,7 +11,7 @@ import { Job } from '@/lib/database.types'
 import { Star, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
-export default function JobsPage() {
+function JobsPageContent() {
   const searchParams = useSearchParams()
   const [filteredJobs, setFilteredJobs] = useState<JobMatchScore[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -282,5 +282,13 @@ export default function JobsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function JobsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <JobsPageContent />
+    </Suspense>
   )
 }
