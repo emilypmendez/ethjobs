@@ -14,33 +14,44 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+// GitHubVerifier interface
+interface IGitHubVerifier {
+    function checkIssueStatus(string memory githubIssue) external view returns (bool isPayable);
+}
+
 contract EthJobsEscrow {
-  event JobCreated(uint256 indexed jobId, address indexed employer, address indexed employee, uint256 amount, uint256 deadline);
-  event FundsReleased(uint256 indexed jobId, address indexed employee, uint256 amount);
-  event FundsRefunded(uint256 indexed jobId, address indexed employer, uint256 amount);
-  event EscrowFunded(uint256 indexed jobId, address indexed employer, uint256 amount);
-  
-  // PYUSD token address
-  address public constant PYUSD_TOKEN = 0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9;
-  
-  // Job structure
-  struct Job {
-    address employer;
-    address employee;
-    uint256 amount;
-    uint256 deadline;
-    bool isFunded;
-    bool isCompleted;
-    bool isRefunded;
-  }
-  
-  // State variables
-  uint256 public nextJobId;
-  mapping(uint256 => Job) public jobs;
-  
-  constructor() {
-    nextJobId = 1;
-  }
+    // Events
+    event JobCreated(uint256 indexed jobId, address indexed employer, address indexed employee, uint256 amount, uint256 deadline, string githubIssue);
+    event FundsReleased(uint256 indexed jobId, address indexed employee, uint256 amount);
+    event FundsRefunded(uint256 indexed jobId, address indexed employer, uint256 amount);
+    event EscrowFunded(uint256 indexed jobId, address indexed employer, uint256 amount);
+    
+    // PYUSD token address
+    address public constant PYUSD_TOKEN = 0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9;
+    
+    // Job structure
+    struct Job {
+        address employer;
+        address employee;
+        uint256 amount;
+        uint256 deadline;
+        string githubIssue;
+        bool isFunded;
+        bool isCompleted;
+        bool isRefunded;
+    }
+    
+    // State variables
+    uint256 public nextJobId;
+    mapping(uint256 => Job) public jobs;
+    
+    // GitHubVerifier contract address
+    address public githubVerifierAddress;
+    
+    constructor() {
+        nextJobId = 1;
+        githubVerifierAddress = 0xBdfA8353BB214Fe6b52f68C59d7C662464f96C81;
+    }
   
   modifier onlyEmployer(uint256 _jobId) {
     require(jobs[_jobId].employer == msg.sender, "Only employer can call this function");
@@ -62,16 +73,19 @@ contract EthJobsEscrow {
    * @param _employee The employee's address
    * @param _deadline The deadline timestamp
    * @param _amount The amount of PYUSD to deposit
+   * @param _githubIssue The GitHub issue URL or reference
    * @return jobId The ID of the created job
    */
   function createJob(
     address _employee,
     uint256 _deadline,
-    uint256 _amount
+    uint256 _amount,
+    string memory _githubIssue
   ) external returns (uint256 jobId) {
     require(_employee != address(0), "Invalid employee address");
     require(_amount > 0, "Amount must be greater than 0");
     require(_deadline > block.timestamp, "Deadline must be in the future");
+    require(bytes(_githubIssue).length > 0, "GitHub issue cannot be empty");
     
     jobId = nextJobId;
     nextJobId++;
@@ -81,12 +95,13 @@ contract EthJobsEscrow {
       employee: _employee,
       amount: _amount,
       deadline: _deadline,
+      githubIssue: _githubIssue,
       isFunded: false,
       isCompleted: false,
       isRefunded: false
     });
     
-    emit JobCreated(jobId, msg.sender, _employee, _amount, _deadline);
+    emit JobCreated(jobId, msg.sender, _employee, _amount, _deadline, _githubIssue);
   }
   
   /**
@@ -124,6 +139,13 @@ contract EthJobsEscrow {
     require(!job.isRefunded, "Job is already refunded");
     require(job.amount > 0, "No funds to release");
     
+    // Call GitHubVerifier to check if the issue is payable and verified
+    require(githubVerifierAddress != address(0), "GitHubVerifier address not set");
+    IGitHubVerifier verifier = IGitHubVerifier(githubVerifierAddress);
+    bool isPayable = verifier.checkIssueStatus(job.githubIssue);
+
+    require(!isPayable, "GitHub issue is not payable");
+
     uint256 amountToSend = job.amount;
     job.amount = 0;
     job.isCompleted = true;
@@ -164,6 +186,7 @@ contract EthJobsEscrow {
    * @return _employee The employee's address
    * @return _amount The amount deposited for the job
    * @return _deadline The deadline timestamp
+   * @return _githubIssue The GitHub issue URL or reference
    * @return _isFunded Whether the job has been funded
    * @return _isCompleted Whether the job has been completed
    * @return _isRefunded Whether the job has been refunded
@@ -173,6 +196,7 @@ contract EthJobsEscrow {
     address _employee,
     uint256 _amount,
     uint256 _deadline,
+    string memory _githubIssue,
     bool _isFunded,
     bool _isCompleted,
     bool _isRefunded
@@ -183,6 +207,7 @@ contract EthJobsEscrow {
       job.employee,
       job.amount,
       job.deadline,
+      job.githubIssue,
       job.isFunded,
       job.isCompleted,
       job.isRefunded
