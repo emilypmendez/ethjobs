@@ -31,6 +31,15 @@ export default function Header() {
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link
+              href="/how-it-works"
+              className={pathname === '/how-it-works'
+                ? "text-blue-600 font-medium hover:text-blue-700"
+                : "text-gray-600 hover:text-gray-900"
+              }
+            >
+              How It Works
+            </Link>
+            <Link
               href="/jobs"
               className={pathname === '/jobs'
                 ? "text-blue-600 font-medium hover:text-blue-700"
@@ -55,7 +64,7 @@ export default function Header() {
                 : "text-gray-600 hover:text-gray-900"
               }
             >
-              Admin
+              Demo Admin
             </Link>
             <div className="text-gray-400">|</div>
             <span className="text-gray-600 text-sm">Sepolia</span>
