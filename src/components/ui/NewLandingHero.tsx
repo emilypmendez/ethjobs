@@ -65,7 +65,7 @@ export default function NewLandingHero() {
         {/* Call to Action */}
         <div className="space-y-4">
           <Link 
-            href="/jobs"
+            href="/signup"
             onClick={handleGetStarted}
             className="inline-flex items-center px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
           >

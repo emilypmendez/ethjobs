@@ -37,8 +37,8 @@ CREATE TABLE jobs (
 
 -- Create profiles table
 CREATE TABLE profiles (
-  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  wallet_address TEXT UNIQUE,
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  wallet_address TEXT UNIQUE NOT NULL,
   email TEXT,
   full_name TEXT,
   avatar_url TEXT,
@@ -47,6 +47,7 @@ CREATE TABLE profiles (
   experience_level TEXT CHECK (experience_level IN ('Entry', 'Mid', 'Senior', 'Lead', 'Executive')),
   location TEXT,
   remote_preference BOOLEAN DEFAULT true,
+  available_start_date DATE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -72,15 +73,15 @@ CREATE POLICY "Companies are viewable by everyone" ON companies
 CREATE POLICY "Active jobs are viewable by everyone" ON jobs
   FOR SELECT USING (is_active = true);
 
--- RLS Policies for profiles (users can only see/edit their own profile)
-CREATE POLICY "Users can view own profile" ON profiles
-  FOR SELECT USING (auth.uid() = id);
+-- RLS Policies for profiles (public read, wallet-based write)
+CREATE POLICY "Profiles are viewable by everyone" ON profiles
+  FOR SELECT USING (true);
 
-CREATE POLICY "Users can update own profile" ON profiles
-  FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can insert profiles" ON profiles
+  FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Users can insert own profile" ON profiles
-  FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update profiles" ON profiles
+  FOR UPDATE USING (true);
 
 -- Function to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
