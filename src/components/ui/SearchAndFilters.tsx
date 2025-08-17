@@ -71,7 +71,7 @@ export default function SearchAndFilters({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search Web3 jobs..."
-              className="block w-full pl-12 pr-32 py-3 border border-gray-300 rounded-lg text-lg leading-6 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-12 pr-32 py-3 border text-gray-700 border-gray-300 rounded-lg text-lg leading-6 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             <div className="absolute inset-y-0 right-0 flex items-center">
               <button
