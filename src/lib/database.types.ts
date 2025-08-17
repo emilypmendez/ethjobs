@@ -125,6 +125,7 @@ export type Database = {
           experience_level: string | null
           location: string | null
           remote_preference: boolean
+          available_start_date: string | null
           created_at: string
           updated_at: string
         }
@@ -139,6 +140,7 @@ export type Database = {
           experience_level?: string | null
           location?: string | null
           remote_preference?: boolean
+          available_start_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -153,6 +155,7 @@ export type Database = {
           experience_level?: string | null
           location?: string | null
           remote_preference?: boolean
+          available_start_date?: string | null
           created_at?: string
           updated_at?: string
         }
