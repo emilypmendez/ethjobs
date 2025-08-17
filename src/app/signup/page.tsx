@@ -189,7 +189,7 @@ export default function SignUpPage() {
             {/* Additional Info */}
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500">
-                Don't have a Web3 wallet?{' '}
+                Don&apos;t have a Web3 wallet?{' '}
                 <a 
                   href="https://metamask.io/" 
                   target="_blank" 

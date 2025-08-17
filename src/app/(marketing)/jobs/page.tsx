@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Header from '@/components/ui/Header'
 import SearchAndFilters from '../../../components/ui/SearchAndFilters'
@@ -11,7 +11,7 @@ import { Job } from '@/lib/database.types'
 import { Star, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
-export default function JobsPage() {
+function JobsPageContent() {
   const searchParams = useSearchParams()
   const [filteredJobs, setFilteredJobs] = useState<JobMatchScore[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -65,7 +65,7 @@ export default function JobsPage() {
             salary_currency: 'USD',
             blockchain_networks: ['Ethereum', 'Polygon'],
             tech_stack: ['React', 'TypeScript', 'Web3.js', 'Ethers.js', 'Next.js'],
-            experience_level: 'senior',
+            experience_level: 'Senior',
             employment_type: 'full-time',
             posted_at: new Date().toISOString(),
             expires_at: null,
@@ -95,7 +95,7 @@ export default function JobsPage() {
             salary_currency: 'USD',
             blockchain_networks: ['Ethereum', 'Arbitrum'],
             tech_stack: ['Solidity', 'Hardhat', 'OpenZeppelin', 'JavaScript', 'Node.js'],
-            experience_level: 'mid',
+            experience_level: 'Mid',
             employment_type: 'full-time',
             posted_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
             expires_at: null,
@@ -125,7 +125,7 @@ export default function JobsPage() {
             salary_currency: 'USD',
             blockchain_networks: ['Ethereum', 'Polygon', 'Base'],
             tech_stack: ['React', 'Node.js', 'Solidity', 'Web3.js', 'MongoDB', 'Express.js'],
-            experience_level: 'mid',
+            experience_level: 'Mid',
             employment_type: 'full-time',
             posted_at: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
             expires_at: null,
@@ -282,5 +282,13 @@ export default function JobsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function JobsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <JobsPageContent />
+    </Suspense>
   )
 }

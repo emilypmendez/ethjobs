@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import SearchAndFilters, { JobFilters } from '../SearchAndFilters'
+import SearchAndFilters from '../SearchAndFilters'
 
 describe('SearchAndFilters', () => {
   it('should call onFilterChange when chain filter is changed', () => {

@@ -81,7 +81,7 @@ export function filterAndRankJobs(
   jobs: Job[],
   filters: JobFilters
 ): JobMatchScore[] {
-  let filteredJobs = jobs.filter(job => {
+  const filteredJobs = jobs.filter(job => {
     // Filter by availability date
     if (filters.availableDate) {
       const availableDate = new Date(filters.availableDate)
@@ -100,7 +100,7 @@ export function filterAndRankJobs(
       const jobLevel = job.experience_level.toLowerCase()
       
       // Allow some flexibility in experience level matching
-      const levelHierarchy = ['entry', 'mid', 'senior', 'lead']
+      const levelHierarchy = ['entry', 'mid', 'senior', 'lead', 'executive']
       const userLevelIndex = levelHierarchy.indexOf(userLevel)
       const jobLevelIndex = levelHierarchy.indexOf(jobLevel)
       
