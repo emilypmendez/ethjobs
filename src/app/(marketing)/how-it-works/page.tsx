@@ -288,7 +288,7 @@ export default function HowItWorksPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link
-                  href="/signup"
+                  href="/employer"
                   className="inline-flex items-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   I'm an Employer
