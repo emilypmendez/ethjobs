@@ -8,6 +8,7 @@ interface SkillCollectionProps {
   onSkillsChange?: (skills: string[]) => void
   placeholder?: string
   className?: string
+  initialSkills?: string[]
 }
 
 const PREDEFINED_SKILLS = [
@@ -38,18 +39,24 @@ const PREDEFINED_SKILLS = [
   'Polkadot', 'Cosmos'
 ]
 
-export default function SkillCollection({ 
-  onSkillsChange, 
+export default function SkillCollection({
+  onSkillsChange,
   placeholder = "What skills do you have?",
-  className 
+  className,
+  initialSkills = []
 }: SkillCollectionProps) {
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(initialSkills)
   const [inputValue, setInputValue] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [filteredSkills, setFilteredSkills] = useState(PREDEFINED_SKILLS)
   
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Update selected skills when initialSkills changes
+  useEffect(() => {
+    setSelectedSkills(initialSkills)
+  }, [initialSkills])
 
   // Filter skills based on input
   useEffect(() => {

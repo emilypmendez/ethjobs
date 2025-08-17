@@ -6,7 +6,7 @@ import NewLandingHero from '@/components/ui/NewLandingHero'
 export default function Home() {
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50">
       <Header />
       <NewLandingHero />
     </div>
