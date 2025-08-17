@@ -23,13 +23,13 @@ export default function NewLandingHero() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20 min-h-[80vh] flex items-center">
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20 min-h-[70vh] flex items-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Main Heading */}
         <div className="mb-8">
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-4">
-            <span className="text-blue-600">Get Paid.</span>{' '}
-            <span className="text-purple-600">Now.</span>
+            <span className="text-blue-600">Build Web3.</span>{' '}
+            <span className="text-purple-600">Get Paid.</span>
           </h1>
           
           {/* Subtitle */}
@@ -101,12 +101,14 @@ export default function NewLandingHero() {
 
         {/* Additional Info */}
         <div className="mt-12 text-center">
-          <p className="text-gray-500 text-sm max-w-2xl mx-auto">
+          <p className="text-gray-500 text-sm max-w-3xl mx-auto">
             ETHJobs connects talented developers with innovative Web3 companies. 
             Whether you&apos;re a Solidity expert, frontend developer, or blockchain enthusiast,
             find your next opportunity in the decentralized future.
           </p>
         </div>
+
+
       </div>
     </div>
   )

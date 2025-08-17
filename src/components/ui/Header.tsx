@@ -3,10 +3,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAccount } from 'wagmi'
 import ConnectButton from '@/components/web3/ConnectButton'
 
 export default function Header() {
   const pathname = usePathname()
+  const { isConnected } = useAccount()
 
   return (
     <header className="bg-white border-b border-gray-200">
@@ -57,27 +59,20 @@ export default function Header() {
             >
               Employer Login
             </Link>
-            <Link
-              href="/admin"
-              className={pathname === '/admin'
-                ? "text-blue-600 font-medium hover:text-blue-700"
-                : "text-gray-600 hover:text-gray-900"
-              }
-            >
-              Demo Admin
-            </Link>
             <div className="text-gray-400">|</div>
             <span className="text-gray-600 text-sm">Sepolia</span>
             <ConnectButton />
-            <Link
-              href="/profile"
-              className={pathname === '/profile'
-                ? "text-blue-600 font-medium hover:text-blue-700"
-                : "text-gray-600 hover:text-gray-900"
-              }
-            >
-              Profile
-            </Link>
+            {isConnected && (
+              <Link
+                href="/profile"
+                className={pathname === '/profile'
+                  ? "text-blue-600 font-medium hover:text-blue-700"
+                  : "text-gray-600 hover:text-gray-900"
+                }
+              >
+                Profile
+              </Link>
+            )}
           </nav>
 
           {/* Mobile menu button */}
